@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Event Summary Reports</h1>
+
+<!-- Summary Cards -->
+<div class="cards">
+    <div class="card">Total Registered: {{ total_registered }}</div>
+    <div class="card">Total Checked In: {{ total_checked_in }}</div>
+    <div class="card">Total Not Checked In: {{ total_not_checked_in }}</div>
+</div>
+
+<!-- Download CSV Button -->
+<a href="{% url 'export_csv' %}" class="button" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #000; color: #fff; text-decoration: none; border-radius: 5px;">
+    Download CSV Report
+</a>
+
+<!-- Participant Status Table -->
+<h2 style="margin-top: 40px;">Participants Status</h2>
+
+<table border="1" style="width: 100%; margin-top: 20px; border-collapse: collapse;">
+    <thead>
+        <tr>
+            <th>Unique ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone Number</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for participant in participants %}
+        <tr>
+            <td>{{ participant.unique_id }}</td>
+            <td>{{ participant.name }}</td>
+            <td>{{ participant.email }}</td>
+            <td>{{ participant.phone_number }}</td>
+            <td>
+                     {% if participant.checkin %}
+                        <span>Checked In</span>
+                    {% else %}
+                        <span>Not Checked In</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No participants found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

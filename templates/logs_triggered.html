@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>QR Code Scan Logs</h1>
+
+<table border="1">
+    <thead>
+        <tr>
+            <th>Participant Name</th>
+            <th>Phone Number</th>
+            <th>Check-in Time</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in checkin_logs %}
+        <tr>
+            <td>{{ log.participant.name }}</td>
+            <td>{{ log.participant.phone_number }}</td>
+            <td>{{ log.checkin_time }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3">No logs found yet.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

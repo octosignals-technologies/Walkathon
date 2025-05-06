@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    .scan-container {
+        text-align: center;
+        padding: 20px;
+    }
+
+    #reader {
+        width: 300px;
+        margin: auto;
+    }
+
+    #scan-result {
+        margin-top: 20px;
+        font-size: 1.2rem;
+        font-weight: 500;
+    }
+</style>
+
+<div class="scan-container">
+    <h1>Scan QR Code to Check-In</h1>
+
+    <div id="reader"></div>
+
+    <!-- Display scan result -->
+    <div id="scan-result"></div>
+
+    <!-- Success and Error Sounds -->
+    <audio id="success-audio" src="{% static 'success-audio.mp3' %}" preload="auto"></audio>
+    <audio id="error-audio" src="{% static 'error-audio.mp3' %}" preload="auto"></audio>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.7/html5-qrcode.min.js"></script>
+<script>
+    let html5QrcodeScanner;  // Declare globally to clear properly
+
+    // This function is called when QR Code is successfully scanned
+    function onScanSuccess(decodedText) {
+        // Stop scanning after success
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.clear();
+        }
+
+        // Post scanned data to Django backend for verification
+        fetch("{% url 'process_scan' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: 'scanned_data=' + encodeURIComponent(decodedText)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                document.getElementById('scan-result').innerHTML = 'Participant Successfully Registered';
+                document.getElementById('success-audio').play();
+            } else if (data.status === 'info') {
+                document.getElementById('scan-result').innerHTML = 'Participant Successfully Registered'; // Same message for info
+                document.getElementById('success-audio').play();
+            } else if (data.status === 'already_checked_in') {
+                document.getElementById('scan-result').innerHTML = 'Participant already checked-in';
+                document.getElementById('error-audio').play();
+            } else {
+                document.getElementById('scan-result').innerHTML = 'Participant not found in registered list';
+                document.getElementById('error-audio').play();
+            }
+            // Reload the page after 3 seconds to allow next scan
+            setTimeout(() => location.reload(), 3000);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('scan-result').innerHTML = 'An error occurred. Please try again.';
+            document.getElementById('error-audio').play();
+            setTimeout(() => location.reload(), 3000);
+        });
+    }
+
+    function onScanError(errorMessage) {
+        // Handle scan error if needed
+        console.error(errorMessage);
+    }
+
+    // This function initializes the QR scanner
+    function startScanner() {
+        html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader", { fps: 10, qrbox: 250 }, /* verbose= */ false
+        );
+        html5QrcodeScanner.render(onScanSuccess, onScanError);
+    }
+
+    // Automatically start scanner when page loads
+    document.addEventListener("DOMContentLoaded", function() {
+        startScanner();
+    });
+</script>
+{% endblock %}

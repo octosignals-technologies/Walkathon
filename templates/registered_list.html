@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    .registered-data {
+        padding: 20px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        margin-top: 20px;
+    }
+
+    .table-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .table-controls button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .spot-registration-btn {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .export-data-btn {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .table-search form {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .table-search input {
+        padding: 6px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        width: 200px;
+    }
+
+    .table-search button {
+        padding: 6px 12px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .table-search button:hover {
+        background-color: #0056b3;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+    th, td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+
+    th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+
+    td button {
+        padding: 6px 12px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    td button:hover {
+        background-color: #0056b3;
+    }
+
+    .details-row {
+        display: none;
+    }
+
+    .details-row div {
+        background: #f9f9f9;
+        padding: 10px;
+        border: 1px solid #ccc;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        margin-top: 1rem;
+    }
+
+    .pagination span {
+        margin: 0 5px;
+    }
+
+    .pagination button {
+        padding: 6px 12px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .pagination button:hover {
+        background-color: #f1f1f1;
+    }
+
+    .pagination .current-page {
+        font-weight: bold;
+    }
+</style>
+
+<div class="registered-data">
+    <h1>Registered Data</h1>
+    <br>
+    <div class="table-controls">
+        <div class="table-search">
+            <form method="GET" action="">
+                <input type="text" name="search" placeholder="Search:" value="{{ request.GET.search|default_if_none:'' }}">
+                <button type="submit">Search</button>
+            </form>
+        </div>
+        <div>
+            <button class="spot-registration-btn">Spot Registration</button>
+            <button class="export-data-btn">Export Data</button>
+        </div>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Regno</th>
+                <th>Name</th>
+                <th>Mobile</th>
+                <th>Gender</th>
+                <th>Company/Empcode</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for participant in participants %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ participant.unique_id }}</td>
+                <td>{{ participant.name }}</td>
+                <td>{{ participant.phone_number }}</td>
+                <td>{{ participant.gender|default:"N/A" }}</td>
+                <td>
+                    {% if participant.o9_employee == "Yes" %}
+                        {{ participant.employee_code|default:"N/A" }}
+                    {% else %}
+                        {{ participant.company_name|default:"N/A" }}
+                    {% endif %}
+                </td>
+                <td>
+                    <button onclick="toggleDetails('{{ participant.unique_id }}')">Show</button>
+                </td>
+            </tr>
+            <tr class="details-row" id="details-{{ participant.unique_id }}">
+                <td colspan="7">
+                    <div>
+                        <strong>Walking Distance:</strong> {{ participant.walking_distance_km }} km<br>
+                        <strong>Gender:</strong> {{ participant.gender|default:"N/A" }}<br>
+                        <strong>Working Professional:</strong> {{ participant.working_professional|default:"N/A" }}<br>
+                        <strong>O9 Employee:</strong> {{ participant.o9_employee|default:"N/A" }}<br>
+                        {% if participant.o9_employee == "Yes" %}
+                            <strong>Employee Code:</strong> {{ participant.employee_code|default:"N/A" }}<br>
+                        {% else %}
+                            <strong>Company Name:</strong> {{ participant.company_name|default:"N/A" }}<br>
+                        {% endif %}
+                        <strong>Email:</strong> {{ participant.email|default:"N/A" }}<br>
+                        <strong>Registered At:</strong> {{ participant.registered_at|default:"N/A" }}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7">No participants registered yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="pagination">
+        <span>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} entries</span>
+        {% if page_obj.has_previous %}
+            <button onclick="window.location.href='?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}'">Previous</button>
+        {% endif %}
+        <span class="current-page">{{ page_obj.number }}</span>
+        {% if page_obj.has_next %}
+            <button onclick="window.location.href='?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}'">Next</button>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function toggleDetails(id) {
+    var detailsRow = document.getElementById('details-' + id);
+    if (detailsRow.style.display === 'none') {
+        detailsRow.style.display = 'table-row';
+    } else {
+        detailsRow.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

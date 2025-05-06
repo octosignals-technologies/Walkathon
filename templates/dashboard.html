@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* Main Content Styles */
+    .dashboard-header {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        padding-left: 10px;
+        color: #333;
+    }
+
+    /* Cards Styles */
+    .cards {
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin: 1rem 0;
+    }
+
+    .card {
+        background: #ffffff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        flex: 1 1 200px;
+        max-width: 250px;
+        text-decoration: none;
+        color: #333;
+        transition: transform 0.2s ease;
+        border: 1px solid #eee;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+    }
+
+    .card-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        color: #3f51b5;
+    }
+
+    /* Event Chart Styles */
+    .event-chart-container {
+        background: #fff;
+        padding: 1.5rem;
+        margin-top: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .event-chart-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        text-align: center;
+        color: #333;
+    }
+
+    canvas {
+        width: 100% !important;
+        height: 300px !important;
+    }
+</style>
+
+<!-- Main Content -->
+<div class="dashboard-header">Dashboard</div>
+
+<div class="cards">
+    <a href="/scan_now/" class="card">
+        <div class="card-icon">📋</div>
+        <div>Check In</div>
+        <small>Click Here</small>
+    </a>
+    <a href="/checkin_list/" class="card">
+        <div class="card-icon">🧮</div>
+        <div>Total CheckIN</div>
+        <small>Click Here</small>
+    </a>
+    <a href="/registered_list/" class="card">
+        <div class="card-icon">📝</div>
+        <div>Registered List</div>
+        <small>Click Here</small>
+    </a>
+</div>
+
+<div class="event-chart-container">
+    <div class="event-chart-title">Event Chart</div>
+    <canvas id="participantChart"></canvas>
+</div>
+
+<script>
+    const ctx = document.getElementById('participantChart').getContext('2d');
+    const participantChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Registered', 'Checked In'],
+            datasets: [{
+                data: [{{ total_registered }}, {{ total_checked_in }}],
+                backgroundColor: ['#3270802', '#ff7043'],
+                borderColor: ['#fff', '#fff'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            cutout: '75%',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        color: '#333',
+                        font: {
+                            size: 14,
+                            family: 'Segoe UI'
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
