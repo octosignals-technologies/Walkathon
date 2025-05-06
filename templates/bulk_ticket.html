@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Bulk Ticket Dispatch</h2>
+
+<form method="post" action="{% url 'bulk_ticket' %}">
+    {% csrf_token %}
+    <p>This will send the message "<strong>active</strong>" to all registered participants via email and WhatsApp.</p>
+    <button type="submit" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px;">Send Bulk Tickets</button>
+</form>
+
+{% if messages %}
+    <ul>
+        {% for message in messages %}
+            <li {% if message.tags %} class="{{ message.tags }}" {% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+{% endblock %}

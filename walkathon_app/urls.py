@@ -12,5 +12,7 @@ urlpatterns = [
     path('reports/', views.reports, name='reports'),
     path('logs_triggered/', views.logs_triggered, name='logs_triggered'),
     path('export_csv/', views.export_participants_csv, name='export_csv'),
-    path('captcha_image/', views.captcha_image, name='captcha_image'),  # <-- Added for captcha refresh
+    path('captcha_image/', views.captcha_image, name='captcha_image'),
+    path('upload_excel/', views.upload_excel, name='upload_excel'),
+    path('bulk_ticket/', views.bulk_ticket, name='bulk_ticket'),
 ]

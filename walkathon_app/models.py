@@ -1,8 +1,10 @@
+import uuid
+
 from django.db import models
 from django.utils import timezone
 
 class Participant(models.Model):
-    unique_id = models.CharField(max_length=20, unique=True)
+    unique_id = models.CharField(max_length=20, unique=True,default=uuid.uuid4)
     name = models.CharField(max_length=255)
     email = models.EmailField()
     phone_number = models.CharField(max_length=20)

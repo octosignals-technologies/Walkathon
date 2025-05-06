@@ -2,7 +2,12 @@ import csv
 import random
 import string
 import base64
-
+from django.core.mail import send_mail
+import urllib.parse
+import openpyxl
+import pandas as pd
+from django.shortcuts import redirect
+from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
@@ -94,35 +99,22 @@ def captcha_image(request):
 
 # Registered List
 def registered_list(request):
-    # Get the search query from the URL
     search_query = request.GET.get('search', '')
-
-    # Fetch all participants
     participants = Participant.objects.all()
 
-    # Apply search filter if a query exists
     if search_query:
-        participants = participants.filter(
-            Q(unique_id__icontains=search_query) |
-            Q(name__icontains=search_query) |
-            Q(phone_number__icontains=search_query) |
-            Q(gender__icontains=search_query) |
-            Q(employee_code__icontains=search_query) |
-            Q(company_name__icontains=search_query) |
-            Q(email__icontains=search_query)
-        )
+        participants = participants.filter(name__icontains=search_query)
 
-    # Paginate the results (20 participants per page)
-    paginator = Paginator(participants, 20)
+    paginator = Paginator(participants, 15)  # Show 15 participants per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # Pass the paginated participants and page object to the template
-    return render(request, 'registered_list.html', {
-        'participants': page_obj.object_list,
+    context = {
+        'participants': participants,
         'page_obj': page_obj,
-        'request': request,  # Pass request to preserve search query in template
-    })
+        'search_query': search_query,
+    }
+    return render(request, 'registered_list.html', context)
 
 
 # Check In List
@@ -220,3 +212,59 @@ def export_participants_csv(request):
             'Yes' if checked_in else 'No'
         ])
     return response
+
+
+def upload_excel(request):
+    if request.method == 'POST' and request.FILES.get('excel_file'):
+        # ... existing Excel upload code ...
+        pass  # Keep your existing file parsing logic here
+
+    search_query = request.GET.get('search', '')
+    participants_qs = Participant.objects.all().order_by('-id')
+
+    if search_query:
+        participants_qs = participants_qs.filter(Q(name__icontains=search_query))
+
+    paginator = Paginator(participants_qs, 15)  # 15 per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'registered_list.html', {
+        'participants': page_obj,
+        'page_obj': page_obj,
+        'search_query': search_query,
+    })
+
+
+def bulk_ticket(request):
+    if request.method == 'POST':
+        message_text = "active"
+        participants = Participant.objects.all()
+
+        for p in participants:
+            if p.email:
+                send_mail(
+                    subject="Walkathon Ticket",
+                    message="Your walkathon ticket is now active.",
+                    from_email=None,  # uses DEFAULT_FROM_EMAIL
+                    recipient_list=[p.email],  # ✅ correct variable
+                    fail_silently=False,
+                )
+
+            # WhatsApp Sending (Mock URL or actual API)
+           # if p.phone_number:
+                phone_number = p.phone_number
+                encoded_message = urllib.parse.quote(f'Hello {p.name}, your ticket status: {message_text}')
+                # Replace this URL with your WhatsApp API endpoint
+                # Example using mock API or Twilio
+                whatsapp_api_url = f"https://api.whatsapp.com/send?phone={phone_number}&text={encoded_message}"
+
+                # Uncomment below if using a real WhatsApp API with auth
+                # response = requests.get(whatsapp_api_url, headers={'Authorization': 'Bearer YOUR_API_KEY'})
+
+               # print(f"WhatsApp message to {phone_number}: {encoded_message}")  # Log/debug
+
+        messages.success(request, "Bulk message sent to all registered participants.")
+        return redirect('bulk_ticket')
+
+    return render(request, 'bulk_ticket.html')

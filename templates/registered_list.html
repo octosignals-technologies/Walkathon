@@ -3,68 +3,40 @@
 
 {% block content %}
 <style>
-    .registered-data {
-        padding: 20px;
+    .upload-section {
         background: #fff;
+        padding: 20px;
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         margin-top: 20px;
     }
 
-    .table-controls {
+    .upload-form {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: 1rem;
+        gap: 10px;
+        margin-bottom: 20px;
     }
 
-    .table-controls button {
+    .upload-form input[type="file"] {
+        border: 1px solid #ccc;
+        padding: 6px;
+        border-radius: 4px;
+    }
+
+    .upload-form button {
+        background-color: #28a745;
+        color: white;
         padding: 8px 16px;
         border: none;
         border-radius: 4px;
         cursor: pointer;
     }
 
-    .spot-registration-btn {
-        background-color: #28a745;
-        color: white;
-    }
-
-    .export-data-btn {
-        background-color: #dc3545;
-        color: white;
-    }
-
-    .table-search form {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .table-search input {
-        padding: 6px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        width: 200px;
-    }
-
-    .table-search button {
-        padding: 6px 12px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-
-    .table-search button:hover {
-        background-color: #0056b3;
-    }
-
     table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 1rem;
+        margin-top: 10px;
     }
 
     th, td {
@@ -77,148 +49,60 @@
         background-color: #f8f9fa;
         font-weight: 600;
     }
-
-    td button {
-        padding: 6px 12px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-
-    td button:hover {
-        background-color: #0056b3;
-    }
-
-    .details-row {
-        display: none;
-    }
-
-    .details-row div {
-        background: #f9f9f9;
-        padding: 10px;
-        border: 1px solid #ccc;
-    }
-
-    .pagination {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        margin-top: 1rem;
-    }
-
-    .pagination span {
-        margin: 0 5px;
-    }
-
-    .pagination button {
-        padding: 6px 12px;
-        background-color: #fff;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-
-    .pagination button:hover {
-        background-color: #f1f1f1;
-    }
-
-    .pagination .current-page {
-        font-weight: bold;
-    }
 </style>
 
-<div class="registered-data">
-    <h1>Registered Data</h1>
+<div class="upload-section">
+    <h2>Upload Participants Excel File</h2>
     <br>
-    <div class="table-controls">
-        <div class="table-search">
-            <form method="GET" action="">
-                <input type="text" name="search" placeholder="Search:" value="{{ request.GET.search|default_if_none:'' }}">
-                <button type="submit">Search</button>
-            </form>
-        </div>
-        <div>
-            <button class="spot-registration-btn">Spot Registration</button>
-            <button class="export-data-btn">Export Data</button>
-        </div>
-    </div>
+    <form method="GET" action="" style="margin-bottom: 20px;">
+    <input type="text" name="search" placeholder="Search by name..." value="{{ search_query }}" style="padding: 6px; width: 250px; border: 1px solid #ccc; border-radius: 4px;">
+    <button type="submit" style="padding: 6px 12px; border: none; background-color: #007bff; color: white; border-radius: 4px;">Search</button>
+    </form>
+    <form method="POST" action="{% url 'upload_excel' %}" enctype="multipart/form-data" class="upload-form">
+        {% csrf_token %}
+        <input type="file" name="excel_file" accept=".xlsx,.xls" required>
+        <button type="submit">Upload</button>
+    </form>
+
+    {% if participants %}
     <table>
         <thead>
             <tr>
-                <th>Item</th>
-                <th>Regno</th>
+                <th>#</th>
                 <th>Name</th>
-                <th>Mobile</th>
-                <th>Gender</th>
-                <th>Company/Empcode</th>
-                <th>Actions</th>
+                <th>Email</th>
+                <th>Phone Number</th>
+                <th>Walking Distance (km)</th>
             </tr>
         </thead>
         <tbody>
-            {% for participant in participants %}
+            {% for participant in page_obj %}
             <tr>
                 <td>{{ forloop.counter }}</td>
-                <td>{{ participant.unique_id }}</td>
                 <td>{{ participant.name }}</td>
+                <td>{{ participant.email }}</td>
                 <td>{{ participant.phone_number }}</td>
-                <td>{{ participant.gender|default:"N/A" }}</td>
-                <td>
-                    {% if participant.o9_employee == "Yes" %}
-                        {{ participant.employee_code|default:"N/A" }}
-                    {% else %}
-                        {{ participant.company_name|default:"N/A" }}
-                    {% endif %}
-                </td>
-                <td>
-                    <button onclick="toggleDetails('{{ participant.unique_id }}')">Show</button>
-                </td>
-            </tr>
-            <tr class="details-row" id="details-{{ participant.unique_id }}">
-                <td colspan="7">
-                    <div>
-                        <strong>Walking Distance:</strong> {{ participant.walking_distance_km }} km<br>
-                        <strong>Gender:</strong> {{ participant.gender|default:"N/A" }}<br>
-                        <strong>Working Professional:</strong> {{ participant.working_professional|default:"N/A" }}<br>
-                        <strong>O9 Employee:</strong> {{ participant.o9_employee|default:"N/A" }}<br>
-                        {% if participant.o9_employee == "Yes" %}
-                            <strong>Employee Code:</strong> {{ participant.employee_code|default:"N/A" }}<br>
-                        {% else %}
-                            <strong>Company Name:</strong> {{ participant.company_name|default:"N/A" }}<br>
-                        {% endif %}
-                        <strong>Email:</strong> {{ participant.email|default:"N/A" }}<br>
-                        <strong>Registered At:</strong> {{ participant.registered_at|default:"N/A" }}
-                    </div>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="7">No participants registered yet.</td>
+                <td>{{ participant.walking_distance_km }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-    <div class="pagination">
-        <span>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} entries</span>
-        {% if page_obj.has_previous %}
-            <button onclick="window.location.href='?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}'">Previous</button>
-        {% endif %}
-        <span class="current-page">{{ page_obj.number }}</span>
-        {% if page_obj.has_next %}
-            <button onclick="window.location.href='?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}'">Next</button>
-        {% endif %}
-    </div>
+    <div class="pagination" style="margin-top: 20px;">
+    {% if page_obj.has_previous %}
+        <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">First</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a>
+    {% endif %}
+
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last</a>
+    {% endif %}
 </div>
 
-<script>
-function toggleDetails(id) {
-    var detailsRow = document.getElementById('details-' + id);
-    if (detailsRow.style.display === 'none') {
-        detailsRow.style.display = 'table-row';
-    } else {
-        detailsRow.style.display = 'none';
-    }
-}
-</script>
+    {% else %}
+        <p>No data to display. Upload an Excel file to see participants.</p>
+    {% endif %}
+</div>
 {% endblock %}
