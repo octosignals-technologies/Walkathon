@@ -12,7 +12,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
-from .models import Participant, CheckIn
+from .models import Participant, CheckIn, CommunicationLog
 from django.utils import timezone
 from django.core.cache import cache
 import uuid
@@ -188,9 +188,9 @@ def reports(request):
 
 
 # Logs Triggered View
-def logs_triggered(request):
-    checkin_logs = CheckIn.objects.select_related('participant').order_by('-checkin_time')
-    return render(request, 'logs_triggered.html', {'checkin_logs': checkin_logs})
+def communication_logs(request):
+    logs = CommunicationLog.objects.all().order_by('-created_on')  # Order by created_on for recent logs first
+    return render(request, 'logs_triggered.html', {'checkin_logs': logs})
 
 
 def export_participants_csv(request):

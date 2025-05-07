@@ -41,3 +41,22 @@ class CheckIn(models.Model):
 
     def __str__(self):
         return f"Check-in: {self.participant.name} at {self.checkin_time}"
+
+class CommunicationLog(models.Model):
+        TYPE_CHOICES = [
+            ('email', 'Email'),
+            ('whatsapp', 'WhatsApp'),
+        ]
+        STATUS_CHOICES = [
+            ('email sent', 'Email Sent'),
+            ('whatsapp sent', 'WhatsApp Sent'),
+        ]
+
+        participant = models.ForeignKey('Participant', on_delete=models.CASCADE)
+        type = models.CharField(max_length=255, choices=TYPE_CHOICES)
+        value = models.CharField(max_length=255)
+        status = models.CharField(max_length=255, choices=STATUS_CHOICES)
+        created_on = models.DateTimeField(auto_now_add=True)
+
+        def __str__(self):
+            return f"{self.type} log for {self.participant.name}"
