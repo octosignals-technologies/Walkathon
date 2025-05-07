@@ -1,20 +1,34 @@
 import uuid
-
 from django.db import models
 from django.utils import timezone
 
+def generate_unique_id():
+    return str(uuid.uuid4())[:8].upper()  # Short unique ID
+
 class Participant(models.Model):
-    unique_id = models.CharField(max_length=20, unique=True,default=uuid.uuid4)
+    unique_id = models.CharField(max_length=20, unique=True, default=generate_unique_id, editable=False)
     name = models.CharField(max_length=255)
     email = models.EmailField()
     phone_number = models.CharField(max_length=20)
     walking_distance_km = models.DecimalField(max_digits=5, decimal_places=2)
     registered_at = models.DateTimeField(auto_now_add=True)
 
-    # New fields based on updated registration
-    gender = models.CharField(max_length=10, choices=[('Male', 'Male'), ('Female', 'Female'), ('Others', 'Others')], null=True, blank=True)
-    working_professional = models.CharField(max_length=3, choices=[('Yes', 'Yes'), ('No', 'No')], null=True, blank=True)
-    o9_employee = models.CharField(max_length=3, choices=[('Yes', 'Yes'), ('No', 'No')], null=True, blank=True)
+    # Optional additional fields
+    gender = models.CharField(
+        max_length=10,
+        choices=[('Male', 'Male'), ('Female', 'Female'), ('Others', 'Others')],
+        null=True, blank=True
+    )
+    working_professional = models.CharField(
+        max_length=3,
+        choices=[('Yes', 'Yes'), ('No', 'No')],
+        null=True, blank=True
+    )
+    o9_employee = models.CharField(
+        max_length=3,
+        choices=[('Yes', 'Yes'), ('No', 'No')],
+        null=True, blank=True
+    )
     employee_code = models.CharField(max_length=100, null=True, blank=True)
     company_name = models.CharField(max_length=255, null=True, blank=True)
 
@@ -25,5 +39,5 @@ class CheckIn(models.Model):
     participant = models.ForeignKey(Participant, on_delete=models.CASCADE)
     checkin_time = models.DateTimeField(default=timezone.now)
 
-    def _str_(self):
+    def __str__(self):
         return f"Check-in: {self.participant.name} at {self.checkin_time}"

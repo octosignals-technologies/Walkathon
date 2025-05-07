@@ -15,7 +15,7 @@ from django.http import JsonResponse, HttpResponse
 from .models import Participant, CheckIn
 from django.utils import timezone
 from django.core.cache import cache
-
+import uuid
 
 # Dashboard Home
 def dashboard(request):
@@ -105,7 +105,7 @@ def registered_list(request):
     if search_query:
         participants = participants.filter(name__icontains=search_query)
 
-    paginator = Paginator(participants, 15)  # Show 15 participants per page
+    paginator = Paginator(participants, 15)  # 15 per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -215,25 +215,50 @@ def export_participants_csv(request):
 
 
 def upload_excel(request):
-    if request.method == 'POST' and request.FILES.get('excel_file'):
-        # ... existing Excel upload code ...
-        pass  # Keep your existing file parsing logic here
+    if request.method == 'POST':
+        excel_file = request.FILES['excel_file']
+        wb = openpyxl.load_workbook(excel_file)
+        sheet = wb.active
 
+        added_count = 0
+        skipped_count = 0
+
+        # Expecting headers: name | email | phone_number | walking_distance
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            name, email, phone_number, walking_distance = row
+
+            if not Participant.objects.filter(email=email, phone_number=phone_number).exists():
+                Participant.objects.create(
+                    unique_id=str(uuid.uuid4())[:8],
+                    name=name,
+                    email=email,
+                    phone_number=phone_number,
+                    walking_distance_km=walking_distance
+                )
+                added_count += 1
+            else:
+                skipped_count += 1
+
+        print(f"Upload complete. Added: {added_count}, Skipped (duplicates): {skipped_count}")
+        return redirect('upload_excel')
+
+    # Pagination and optional search
     search_query = request.GET.get('search', '')
-    participants_qs = Participant.objects.all().order_by('-id')
+    participants = Participant.objects.all()
 
     if search_query:
-        participants_qs = participants_qs.filter(Q(name__icontains=search_query))
+        participants = participants.filter(Q(name__icontains=search_query))
 
-    paginator = Paginator(participants_qs, 15)  # 15 per page
+    participants = participants.order_by('name')  # Add ordering to avoid pagination warning
+    paginator = Paginator(participants, 15)  # 15 per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'registered_list.html', {
-        'participants': page_obj,
+    context = {
         'page_obj': page_obj,
-        'search_query': search_query,
-    })
+        'search_query': search_query
+    }
+    return render(request, 'registered_list.html', context)
 
 
 def bulk_ticket(request):
@@ -253,11 +278,11 @@ def bulk_ticket(request):
 
             # WhatsApp Sending (Mock URL or actual API)
            # if p.phone_number:
-                phone_number = p.phone_number
-                encoded_message = urllib.parse.quote(f'Hello {p.name}, your ticket status: {message_text}')
+                #phone_number = p.phone_number
+                #encoded_message = urllib.parse.quote(f'Hello {p.name}, your ticket status: {message_text}')
                 # Replace this URL with your WhatsApp API endpoint
                 # Example using mock API or Twilio
-                whatsapp_api_url = f"https://api.whatsapp.com/send?phone={phone_number}&text={encoded_message}"
+               # whatsapp_api_url = f"https://api.whatsapp.com/send?phone={phone_number}&text={encoded_message}"
 
                 # Uncomment below if using a real WhatsApp API with auth
                 # response = requests.get(whatsapp_api_url, headers={'Authorization': 'Bearer YOUR_API_KEY'})

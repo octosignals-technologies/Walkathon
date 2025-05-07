@@ -49,26 +49,41 @@
         background-color: #f8f9fa;
         font-weight: 600;
     }
+
+    .pagination a {
+        margin: 0 5px;
+        text-decoration: none;
+        color: #007bff;
+    }
+
+    .pagination span {
+        margin: 0 10px;
+    }
 </style>
 
 <div class="upload-section">
     <h2>Upload Participants Excel File</h2>
-    <br>
-    <form method="GET" action="" style="margin-bottom: 20px;">
-    <input type="text" name="search" placeholder="Search by name..." value="{{ search_query }}" style="padding: 6px; width: 250px; border: 1px solid #ccc; border-radius: 4px;">
-    <button type="submit" style="padding: 6px 12px; border: none; background-color: #007bff; color: white; border-radius: 4px;">Search</button>
-    </form>
+
+    <!-- Excel Upload Form -->
     <form method="POST" action="{% url 'upload_excel' %}" enctype="multipart/form-data" class="upload-form">
         {% csrf_token %}
         <input type="file" name="excel_file" accept=".xlsx,.xls" required>
         <button type="submit">Upload</button>
     </form>
 
-    {% if participants %}
+    <!-- Search Form -->
+    <form method="GET" action="" style="margin-bottom: 20px;">
+        <input type="text" name="search" placeholder="Search by name..." value="{{ search_query }}" style="padding: 6px; width: 250px; border: 1px solid #ccc; border-radius: 4px;">
+        <button type="submit" style="padding: 6px 12px; border: none; background-color: #007bff; color: white; border-radius: 4px;">Search</button>
+    </form>
+
+    <!-- Participants Table -->
+    {% if page_obj %}
     <table>
         <thead>
             <tr>
                 <th>#</th>
+                <th>Reg No</th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Phone Number</th>
@@ -79,6 +94,7 @@
             {% for participant in page_obj %}
             <tr>
                 <td>{{ forloop.counter }}</td>
+                <td>{{ participant.unique_id }}</td>
                 <td>{{ participant.name }}</td>
                 <td>{{ participant.email }}</td>
                 <td>{{ participant.phone_number }}</td>
@@ -87,22 +103,32 @@
             {% endfor %}
         </tbody>
     </table>
-    <div class="pagination" style="margin-top: 20px;">
+
+    <!-- Pagination Controls -->
+   <div class="pagination" style="display: flex; justify-content: center; align-items: center; margin-top: 20px;">
     {% if page_obj.has_previous %}
-        <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">First</a>
-        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a>
+        <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">&laquo; First</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">&lsaquo; Previous</a>
     {% endif %}
 
-    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+            <span style="margin: 0 5px; font-weight: bold;">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}" style="margin: 0 5px;">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
 
     {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last</a>
+        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next &rsaquo;</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last &raquo;</a>
     {% endif %}
 </div>
+
 
     {% else %}
         <p>No data to display. Upload an Excel file to see participants.</p>
     {% endif %}
-</div>
+    </div>
+
 {% endblock %}
