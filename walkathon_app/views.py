@@ -49,7 +49,7 @@ def register(request):
             error_message = "Invalid Captcha. Please try again."
         else:
             unique_id = f"PART{Participant.objects.count() + 1:04d}"
-            participant = Participant.objects.create(
+            Participant.objects.create(
                 name=name,
                 email=email,
                 phone_number=phone_number,
@@ -61,7 +61,8 @@ def register(request):
                 employee_code=employee_code,
                 company_name=company_name
             )
-            return redirect('registered_list')
+            messages.success(request, "Successfully Registered")
+            return redirect('register')  # redirect back to the same registration page
 
     # Always create a new captcha for GET request or after failed POST
     captcha_text = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
@@ -100,7 +101,10 @@ def captcha_image(request):
 # Registered List
 def registered_list(request):
     search_query = request.GET.get('search', '')
+    source_filter = request.GET.get('source')
     participants = Participant.objects.all()
+    if source_filter == 'form':
+        participants = participants.filter(unique_id__startswith='PART')
 
     if search_query:
         participants = participants.filter(name__icontains=search_query)
@@ -169,11 +173,14 @@ def certificate_entries(request):
 
 # Reports View
 def reports(request):
+    search_query = request.GET.get('search', '')
     participants = Participant.objects.prefetch_related('checkin_set').all()
     total_registered = participants.count()
     total_checked_in = sum(1 for p in participants if p.checkin_set.exists())
     total_not_checked_in = total_registered - total_checked_in
 
+    if search_query:
+        participants = participants.filter(name__icontains=search_query)
     # Attach a property for easier template use
     for p in participants:
         p.checkin = p.checkin_set.first()

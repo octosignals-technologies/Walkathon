@@ -3,6 +3,22 @@
 {% block content %}
 <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 20px;">Event Summary Reports</h1>
 
+<!-- Top Controls: Download Button and Search -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <!-- Download CSV Button -->
+    <a href="{% url 'export_csv' %}" class="button" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        Download CSV Report
+    </a>
+
+    <!-- Search Form -->
+    <form method="GET" action="" style="display: flex; gap: 10px; align-items: center;">
+        <input type="text" name="search" placeholder="Search by name..." value="{{ search_query }}" style="padding: 10px 12px; width: 250px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <button type="submit" style="padding: 10px 16px; border: none; background-color: #007bff; color: white; border-radius: 6px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            Search
+        </button>
+    </form>
+</div>
+
 <!-- Summary Cards -->
 <div style="display: flex; gap: 20px; margin-bottom: 30px;">
     <div style="flex: 1; background-color: #f0f0f0; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.1); font-weight: 600;">
@@ -15,11 +31,6 @@
         Total Not Checked In<br><span style="font-size: 1.5rem;">{{ total_not_checked_in }}</span>
     </div>
 </div>
-
-<!-- Download CSV Button -->
-<a href="{% url 'export_csv' %}" class="button" style="display: inline-block; margin-bottom: 30px; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-    Download CSV Report
-</a>
 
 <!-- Participant Status Table -->
 <h2 style="margin-top: 40px; font-size: 1.5rem; margin-bottom: 10px;">Participants Status</h2>

@@ -46,6 +46,15 @@
     </script>
 </head>
 <body>
+
+{% if messages %}
+    <ul style="color: green; font-weight: bold;">
+        {% for message in messages %}
+            <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
     <div class="container">
         <h1>Register for Walkathon</h1>
         <form method="POST">
