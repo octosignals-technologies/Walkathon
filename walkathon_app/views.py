@@ -2,6 +2,9 @@ import csv
 import random
 import string
 import base64
+
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.mail import send_mail
 import urllib.parse
 import openpyxl
@@ -16,6 +19,24 @@ from .models import Participant, CheckIn, CommunicationLog
 from django.utils import timezone
 from django.core.cache import cache
 import uuid
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser or u.groups.filter(name='CustomAdmin').exists())
+def admin_dashboard(request):
+    return render(request, 'dashboard.html')
+def custom_login(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None and (user.is_superuser or user.groups.filter(name='CustomAdmin').exists()):
+            login(request, user)
+            return redirect('dashboard')
+        else:
+            return render(request, 'login.html', {'error': 'Invalid credentials or unauthorized user.'})
+    return render(request, 'login.html')
 
 # Dashboard Home
 def dashboard(request):
